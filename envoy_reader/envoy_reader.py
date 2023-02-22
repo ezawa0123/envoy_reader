@@ -85,6 +85,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         enlighten_site_id=None,
         enlighten_serial_num=None,
         https_flag="",
+        token=""
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -106,7 +107,8 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         self.enlighten_site_id = enlighten_site_id
         self.enlighten_serial_num = enlighten_serial_num
         self.https_flag = https_flag
-        self._token = ""
+        self.token_auth = bool(token)
+        self._token = token
 
     @property
     def async_client(self):
@@ -280,6 +282,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
             else:
                 _LOGGER.debug("Token is populated: %s", self._token)
                 if self._is_enphase_token_expired(self._token):
+                    raise Exception("Token Expired")
                     _LOGGER.debug("Found Expired token - Retrieving new token")
                     await self._getEnphaseToken()
 
@@ -728,6 +731,10 @@ if __name__ == "__main__":
         + "or press enter to use 'envoy' as default: "
     )
 
+    TOKEN = input(
+        "Enter the Envoy token: "
+    )
+    
     USERNAME = input(
         "Enter the Username for Inverter data authentication, "
         + "or press enter to use 'envoy' as default: "
@@ -743,8 +750,21 @@ if __name__ == "__main__":
 
     if USERNAME == "":
         USERNAME = "envoy"
-
-    if PASSWORD == "":
+    
+    if TOKEN:
+        TESTREADER = EnvoyReader(
+            HOST,
+            USERNAME,
+            inverters=True,
+            enlighten_user=args.enlighten_user,
+            enlighten_pass=args.enlighten_pass,
+            commissioned=args.commissioned,
+            enlighten_site_id=args.enlighten_site_id,
+            enlighten_serial_num=args.enlighten_serial_num,
+            https_flag=SECURE,
+            token=TOKEN
+        )
+    elif PASSWORD == "":
         TESTREADER = EnvoyReader(
             HOST,
             USERNAME,
